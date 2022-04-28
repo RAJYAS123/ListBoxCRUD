@@ -1,0 +1,232 @@
+﻿@model ListBoxCRUD.Models.EmployeeTB
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Index</h2>
+
+<table id="tblemployee">
+    <tr>
+        <td></td>
+        <td><br />@Html.HiddenFor(m => m.employeeid, new { @id = "StuId" })</td>
+    </tr>
+    <tr>
+        <td>Name</td>
+        <td><br />@Html.TextBoxFor(m => m.name, new { @id = "StuName", @class = "form-control", @placeholder = "Name" })</td>
+    </tr>
+    <tr>
+        <td>Designation</td>
+        <td><br />@Html.DropDownListFor(m => m.designationid, ViewBag.ListOfDepartment as SelectList, "--Select Designation--", new { @id = "DropDwn", @class = "form-control" })</td>
+    </tr>
+    <tr>
+        <td>Salary</td>
+        <td><br />@Html.TextBoxFor(m => m.salary, new { @id = "Salary", @class = "form-control", @placeholder = "Salary" })</td>
+    </tr>
+    <tr>
+        <td>Address</td>
+        <td><br />@Html.TextAreaFor(m => m.address, new { @id = "Address", @class = "form-control", @placeholder = "Addres" })</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td>
+            <br /><input type="submit" id="btninsert" class="btn btn-primary" value="Submit" onclick="validate()" />
+            <input type="submit" id="btncancel" class="btn btn-primary" value="Cancel" />
+            <input type="submit" id="btndelete" class="btn btn-danger" value="Delete" />
+            <input type="submit" id="btnupdate" class="btn btn-primary" value="Update" />
+        </td>
+    </tr>
+    <tr>
+        <td>Employee Data List</td>
+        <td><br /><select id="lstbxEmployees" name="desig" style="width:100px" size="8"></select></td>
+    </tr>
+</table>
+
+
+<script src="~/Scripts/jquery-3.4.1.min.js"></script>
+
+<script>
+
+    var ValidData = 0;
+
+    $(document).ready(function () {
+        $('#btnupdate').attr('disabled', true);
+        $('#btndelete').attr('disabled', true);
+    })
+
+
+    $('#btncancel').click(function () {
+
+        $('#StuName').val('');
+        $("#DropDwn").val('');
+        $("#Salary").val('');
+        $('#Address').val('');
+    });
+
+
+
+    $(document).ready(function () {
+        $("#lstbxEmployees").change(function () {
+
+            $.ajax({
+                type: "GET",
+                url: "/Home/GetEmployeeByID",
+                data: { employeeid: $("#lstbxEmployees").val() },
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (data) {
+                    debugger;
+                    $("#StuName").val(data.name);
+                    $("#DropDwn").val(data.designationid);
+                    $("#Salary").val(data.salary);
+                    $("#Address").val(data.address);
+                    $('#btnupdate').attr('disabled', false);
+                    $('#btndelete').attr('disabled', false);
+                    $('#btninsert').attr('disabled', true);
+                    $('#btncancel').attr('disabled', true);
+                }
+            });
+
+        });
+    });
+
+
+    getdata();
+    debugger;
+    function getdata() {
+        debugger;
+        $.ajax({
+            type: "GET",
+            url: "/Home/GetEmployee",
+            data: '',
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (data) {
+                debugger;
+                $("#lstbxEmployees").html('');
+                $.each(data, function (i, data) {
+                    $('#lstbxEmployees').append("<option value =" + data.employeeid + ">" + data.name + "</option>");
+                });
+            },
+        });
+    }
+
+
+    $("#btninsert").click(function () {
+        debugger;
+
+        if (ValidData != 1) {
+
+
+            var data = { name: $("#StuName").val(), designationid: $("#DropDwn").val(), salary: $("#Salary").val(), address: $("#Address").val() };
+            $.ajax({
+                type: "POST",
+                url: "/Home/SaveDataInDatabase",
+                dataType: "json",
+                data: JSON.stringify({ model: data }),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (data) {
+                    debugger;
+                    getdata();
+                    Clear();
+
+                }
+
+            });
+        }
+
+
+
+    });
+
+
+    $("#btnupdate").click(function () {
+        debugger;
+        var emp = {};
+        emp.employeeid = $("#lstbxEmployees").val();
+        emp.name = $("#StuName").val();
+        emp.designationid = $("#DropDwn").val();
+        emp.salary = $("#Salary").val();
+        emp.address = $("#Address").val();
+        debugger;
+        $.ajax({
+            type: "POST",
+            url: "/Home/Update",
+            data: JSON.stringify(emp),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (result) {
+                debugger;
+                alert("record are updated");
+                getdata();
+                Clear();
+
+            }
+        });
+    });
+
+
+
+    function Clear() {
+        $("#StuName").val("");
+        $("#DropDwn").val("");
+        $("#Salary").val("");
+        $("#Address").val("");
+    }
+
+
+    $("#btndelete").click(function () {
+        debugger;
+        var emp = {};
+        emp.employeeid = $("#lstbxEmployees").val();
+        emp.name = $("#StuName").val();
+        emp.designationid = $("#DropDwn").val();
+        emp.salary = $("#Salary").val();
+        emp.address = $("#Address").val();
+        debugger;
+        $.ajax({
+            type: "POST",
+            url: "/Home/Delete",
+            data: JSON.stringify(emp),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (r) {
+                debugger;
+                alert("record are deleted");
+                getdata();
+                Clear();
+
+            }
+        });
+    });
+
+
+
+
+    function validate() {
+        debugger;
+        ValidData = 0;
+        if ($("#StuName").val() == "") {
+            ValidData = 1;
+            alert("Name Is Required");
+            return false;
+        }
+        if ($("#DropDwn").val() == "") {
+            ValidData = 1;
+            alert("Designation Is Required");
+            return false;
+        }
+        if ($("#Salary").val() == "") {
+            ValidData = 1;
+            alert("Salary Is Required");
+            return false;
+        }
+        if ($("#Address").val() == "") {
+            ValidData = 1;
+            alert("Address Is Required");
+            return false;
+        }
+    }
+
+
+</script>
